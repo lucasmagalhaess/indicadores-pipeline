@@ -1,0 +1,32 @@
+name: Deploy Indicadores Pipeline
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'functions/**'
+
+jobs:
+  deploy:
+    name: Deploy Notebook to Databricks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Databricks CLI
+        run: curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+
+      - name: Deploy notebook
+        env:
+          DATABRICKS_HOST: https://adb-7405608954459582.2.azuredatabricks.net
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        run: |
+          databricks workspace mkdirs /indicadores
+          databricks workspace import --file functions/transform/transform_databricks.py --language PYTHON /indicadores/transform_indicadores
+          echo "Notebook deployado!"
